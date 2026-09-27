@@ -1,0 +1,36 @@
+opencode-memory
+Copyright (c) 2026 Kaivalya Mahajan. Licensed under the MIT License (see LICENSE).
+
+This project is an independent implementation. Its design draws on ideas from
+the following MIT-licensed projects. No source files were copied verbatim; where
+an approach is adapted, the original copyright and permission notices apply to
+that material.
+
+1. pi-observational-memory-extension
+   https://github.com/nik1t7n/pi-observational-memory-extension
+   Copyright (c) Nikita (nik1t7n)
+   Ideas used: Mastra-style observer/reflector with async buffering, current-task
+   and suggested-response state, exact-message recall, duplicate suppression,
+   atomic persistence, secret redaction.
+
+2. pi-observational-memory
+   https://github.com/amosblomqvist/pi-observational-memory
+   Copyright (c) Amos Blomqvist
+   Ideas used: fixed token-bounded chunks, observation watermarks, append-only
+   lifecycle events, sandboxed structured consolidation, deterministic INDEX.md
+   and bounded JOURNEY.md.
+
+3. observational-memory
+   https://github.com/intertwine/observational-memory
+   Copyright (c) Intertwine
+   Ideas used: startup context budgeting, freshness markers, keyword/BM25
+   search, source provenance, export and backup.
+
+4. Mastra Observational Memory (@mastra/memory)
+   https://github.com/mastra-ai/mastra
+   Concept of observer/reflector token thresholds and priority-tagged
+   observations.
+
+Third-party runtime dependencies (zod, ts-fsrs, solid-js, dompurify, mermaid,
+and others listed in package.json files) are distributed under their own
+licenses.

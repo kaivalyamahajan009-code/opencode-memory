@@ -1,0 +1,24 @@
+{
+  "name": "opencode-memory",
+  "version": "0.1.0",
+  "description": "Observational memory for OpenCode: session, project, workspace and user memory with a local dashboard.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun build src/index.ts --target=node --format=esm --outfile=dist/index.js --external bun:sqlite --external node:sqlite && node scripts/copy-dashboard.mjs"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "1.18.32",
+    "@opencode-ai/sdk": "1.18.32",
+    "@opencode-memory/core": "workspace:*",
+    "jsonc-parser": "3.3.1",
+    "zod": "4.1.8"
+  }
+}

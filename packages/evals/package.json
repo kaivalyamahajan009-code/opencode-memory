@@ -1,0 +1,16 @@
+{
+  "name": "@opencode-memory/evals",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun test ./test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "real": "bun real/run.ts",
+    "real:dry": "bun real/run.ts --dry-run"
+  },
+  "dependencies": {
+    "@opencode-memory/core": "workspace:*",
+    "opencode-memory": "workspace:*"
+  }
+}

@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.45;
+  background: var(--om-bg);
+  color: var(--om-fg);
+}
+
+:root {
+  --om-bg: #f7f7f5;
+  --om-fg: #171717;
+  --om-muted: #737373;
+  --om-border: #e5e5e5;
+  --om-panel: #ffffff;
+  --om-hover: #f0f0ee;
+  --om-accent: #404040;
+}
+
+:root.dark {
+  --om-bg: #0e0e0c;
+  --om-fg: #ececec;
+  --om-muted: #a3a3a3;
+  --om-border: #2a2a28;
+  --om-panel: #161614;
+  --om-hover: #222220;
+  --om-accent: #d4d4d4;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--om-fg);
+  outline-offset: 1px;
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}

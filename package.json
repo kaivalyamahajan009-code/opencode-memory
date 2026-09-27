@@ -1,0 +1,22 @@
+{
+  "name": "opencode-memory-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "bun run --cwd packages/dashboard build && bun run --cwd packages/plugin build",
+    "test": "bun test packages/core packages/plugin packages/evals",
+    "test:node": "node packages/plugin/test/node-smoke.mjs",
+    "test:node:core": "node packages/core/scripts/node-check.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "install-local": "node scripts/install-local.mjs",
+    "eval:real": "bun packages/evals/real/run.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "24.12.2",
+    "typescript": "5.8.2"
+  }
+}
