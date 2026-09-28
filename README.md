@@ -107,6 +107,8 @@ See [User guide](docs/user-guide.md).
 - [Architecture, data model, scopes, security, and privacy](docs/architecture-security.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Development, desktop fork, contribution, and release readiness](docs/development.md)
+- [Complete project and feature guide (PDF)](docs/OpenCode-Memory-Project-Documentation.pdf)
+- [Complete project and feature guide (Word)](docs/OpenCode-Memory-Project-Documentation.docx)
 
 ## Verify the workspace
 
