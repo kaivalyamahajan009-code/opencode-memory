@@ -15,6 +15,7 @@ import { textFromParts, toSessionMeta, type OcClient } from "./opencode-adapter"
 import { applyMemoryPermissions, HIDDEN_AGENT_PERMISSION, workerPermission } from "./permission"
 import { splicePrunedMessages } from "./prune-messages"
 import { acquireService, eventWatermark, memoFresh, type MemoryPluginOptions } from "./service"
+import { learningAgentOverride } from "./learning-agent"
 import { compactionNote, createTools } from "./tools"
 
 const ARTIFACT_TOOLS = new Set(["write", "edit", "multiedit", "apply_patch", "patch"])
@@ -162,6 +163,7 @@ async function server(input: PluginInput, options?: MemoryPluginOptions): Promis
   const forgetSessionState = (id: string) => {
     knownSessions.delete(id)
     state.lastUser.delete(id)
+    state.agent.delete(id)
     state.currentUserMessage.delete(id)
     state.injectionMemo.delete(id)
     state.injected.delete(id)
@@ -246,6 +248,7 @@ async function server(input: PluginInput, options?: MemoryPluginOptions): Promis
       await safe("chat.message", async () => {
         const id = incoming.sessionID
         if (!id || engine.isInternal(id)) return
+        if (incoming.agent) state.agent.set(id, incoming.agent)
         const text = textFromParts(output.parts as any) || (output.message as any)?.content || ""
         if (text) state.lastUser.set(id, text.slice(0, LAST_USER_MAX))
         const messageID = incoming.messageID || (output.message as any)?.id
@@ -266,8 +269,19 @@ async function server(input: PluginInput, options?: MemoryPluginOptions): Promis
         }
         if (isInternalSystem(output.system)) return
         const messageID = state.currentUserMessage.get(id)
+        const override = learningAgentOverride(engine.config, state.agent.get(id))
+        // Same message id covers every step of the turn, and chat.params can change the
+        // agent after the first build. The override is part of the memo so a switch into
+        // or out of a learning agent does not resend the other block.
+        const scope = { domain: override?.domain ?? "", workspace: override?.workspace ?? "" }
         const memo = state.injectionMemo.get(id)
-        if (messageID && memo?.messageID === messageID && memoFresh(engine, memo)) {
+        if (
+          messageID &&
+          memo?.messageID === messageID &&
+          memo.domain === scope.domain &&
+          memo.workspace === scope.workspace &&
+          memoFresh(engine, memo)
+        ) {
           if (memo.block) {
             output.system.push(memo.block)
             state.injected.set(id, messageID)
@@ -281,7 +295,7 @@ async function server(input: PluginInput, options?: MemoryPluginOptions): Promis
         const deadline = engine.config.inject.deadlineMs
         const generation = memoryGeneration(engine.db)
         const events = eventWatermark(engine.db)
-        const result = await withTimeout(engine.buildInjection(id, state.lastUser.get(id), messageID), deadline)
+        const result = await withTimeout(engine.buildInjection(id, state.lastUser.get(id), messageID, override), deadline)
         if (result === TIMEOUT) {
           const count = (misses && !misses.until ? misses.misses : 0) + 1
           if (count >= 2) {
@@ -291,12 +305,12 @@ async function server(input: PluginInput, options?: MemoryPluginOptions): Promis
             state.deadlineMisses.set(id, { misses: count, until: 0 })
             log("warn", `memory injection for ${id} exceeded ${deadline}ms; sent without memory`)
           }
-          if (messageID) state.injectionMemo.set(id, { messageID, block: "", ids: [], generation, events })
+          if (messageID) state.injectionMemo.set(id, { messageID, block: "", ids: [], generation, events, ...scope })
           return
         }
         state.deadlineMisses.delete(id)
         const block = result?.block ?? ""
-        if (messageID) state.injectionMemo.set(id, { messageID, block, ids: result?.ids ?? [], generation, events })
+        if (messageID) state.injectionMemo.set(id, { messageID, block, ids: result?.ids ?? [], generation, events, ...scope })
         if (!block) return
         output.system.push(block)
         if (messageID) state.injected.set(id, messageID)
@@ -305,6 +319,7 @@ async function server(input: PluginInput, options?: MemoryPluginOptions): Promis
     "chat.params": async (incoming) => {
       await safe("chat.params", async () => {
         const id = incoming.sessionID
+        if (id && incoming.agent && !engine.isInternal(id)) state.agent.set(id, incoming.agent)
         const requestKey = incoming.message?.id
         if (!id || !requestKey || engine.isInternal(id)) return
         const model = incoming.model

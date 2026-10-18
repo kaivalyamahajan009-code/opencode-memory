@@ -15,6 +15,7 @@ import {
   type ScopeKind,
 } from "@opencode-memory/core"
 import { tool } from "@opencode-ai/plugin"
+import { learningAgentOverride } from "./learning-agent"
 
 const z = tool.schema
 
@@ -47,6 +48,18 @@ const rememberPayloadSchema = z
 
 function ctxFor(engine: MemoryEngine, adapter: InstanceAdapter, sessionID: string): AccessContext {
   return engine.contextForSession(sessionID) ?? engine.context(adapter.project.id, sessionID)
+}
+
+/** Same workspace as learn-agent injection, so due reviews and recorded attempts agree. */
+function learningCtx(
+  engine: MemoryEngine,
+  adapter: InstanceAdapter,
+  sessionID: string,
+  agent: string | undefined,
+): AccessContext {
+  const ctx = ctxFor(engine, adapter, sessionID)
+  const override = learningAgentOverride(engine.config, agent)
+  return override ? { ...ctx, workspace: override.workspace } : ctx
 }
 
 function line(o: { id: string; kind?: string; scope_kind?: string; status?: string; content: string; confidence?: number }): string {
@@ -213,7 +226,7 @@ export function createTools(
     description: "List learning concepts due for review in this workspace.",
     args: {},
     async execute(_args, context) {
-      const ctx = ctxFor(engine, adapter, context.sessionID)
+      const ctx = learningCtx(engine, adapter, context.sessionID, context.agent)
       const due = engine.learning(ctx.workspace).due
       if (!due.length) return "No reviews due."
       return ["Due for review:", ...due.map((d) => `- ${d.name} (${d.id}) due ${new Date(d.due_at).toISOString()}`)].join("\n")
@@ -427,7 +440,7 @@ export function createTools(
         kind: z.enum(["quiz-attempt", "retention-check", "demonstrated-skill"]).optional(),
       },
       async execute(args, context) {
-        const ctx = ctxFor(engine, adapter, context.sessionID)
+        const ctx = learningCtx(engine, adapter, context.sessionID, context.agent)
         const userText = latestUserText(engine, context.sessionID, opts?.lastUser?.(context.sessionID))
         if (!quotedInText(userText, args.answer)) {
           return "Rejected: the learner's answer must appear in the latest user message (word-boundary match, at least 3 words)."

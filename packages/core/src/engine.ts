@@ -896,8 +896,16 @@ export class MemoryEngine {
 
   // ---------- injection ----------
 
-  /** Build the memory block for a real user turn. Never throws; returns undefined when nothing should be injected. */
-  async buildInjection(sessionId: string, query?: string, requestKey?: string): Promise<InjectionResult | undefined> {
+  /**
+   * Build the memory block for a real user turn. Never throws; returns undefined when nothing should be injected.
+   * `override` replaces the project domain and the workspace used for this block only.
+   */
+  async buildInjection(
+    sessionId: string,
+    query?: string,
+    requestKey?: string,
+    override?: { domain?: string; workspace?: string },
+  ): Promise<InjectionResult | undefined> {
     try {
       if (!this.config.inject.enabled || this.isInternal(sessionId)) {
         this.pending.delete(sessionId)
@@ -915,9 +923,14 @@ export class MemoryEngine {
         const v = await withTimeout(this.embedder.embed([query.slice(0, 2000)]), Math.max(50, Math.floor(deadline / 2))).catch(() => TIMEOUT)
         if (v !== TIMEOUT && Array.isArray(v)) queryVector = v[0]
       }
+      const ctx = {
+        ...this.context(s.project_id),
+        sessionId,
+        ...(override?.workspace ? { workspace: override.workspace } : {}),
+      }
       const result = buildMemoryBlock(this.db, {
-        ctx: { ...this.context(s.project_id), sessionId },
-        domain: this.projectDomain(s.project_id),
+        ctx,
+        domain: override?.domain || this.projectDomain(s.project_id),
         query,
         queryVector,
         embeddingModel: this.embedder?.model,

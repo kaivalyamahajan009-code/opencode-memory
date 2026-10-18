@@ -64,6 +64,8 @@ export type MemoryConfig = {
   inject: {
     enabled: boolean
     deadlineMs: number
+    /** Agent names that get learning-domain injection, including due reviews, in every project. */
+    learningAgents: string[]
     budget: {
       profile: number
       workspace: number
@@ -141,6 +143,7 @@ export function defaultConfig(dataDir = defaultDataDir()): MemoryConfig {
     inject: {
       enabled: true,
       deadlineMs: 250,
+      learningAgents: ["learn"],
       budget: { profile: 600, workspace: 900, project: 900, session: 2400, task: 300, recall: 900 },
     },
     cost: {
@@ -223,6 +226,7 @@ const CONFIG_SECTIONS = {
   inject: z.strictObject({
     enabled: z.boolean().optional(),
     deadlineMs: nonNeg.optional(),
+    learningAgents: z.array(z.string().min(1)).optional(),
     budget: z
       .strictObject({
         profile: nonNegInt.optional(),

@@ -34,7 +34,16 @@ export type MemoryPluginOptions = {
  * `generation` (memoryGeneration()) and `events` (eventWatermark()) are read before the block
  * was built; `ids` are the observations in it.
  */
-export type InjectionMemo = { messageID: string; block: string; ids: string[]; generation: number; events: number }
+export type InjectionMemo = {
+  messageID: string
+  block: string
+  ids: string[]
+  generation: number
+  events: number
+  /** Override the block was built with. Empty means the project's own domain and workspace. */
+  domain: string
+  workspace: string
+}
 export type DeadlineState = { misses: number; until: number }
 
 const ALTERING_EVENTS = ["forgotten", "rejected", "edited", "superseded", "condensed", "hidden", "expired"]
@@ -126,6 +135,8 @@ export type ServiceState = {
   token: string
   refs: number
   lastUser: LruMap<string, string>
+  /** Per session: agent from the latest chat.message or chat.params. system.transform has no agent of its own. */
+  agent: LruMap<string, string>
   /** Per session: the block built for the current user message, reused for every step of that turn. */
   injectionMemo: LruMap<string, InjectionMemo>
   currentUserMessage: LruMap<string, string>
@@ -263,6 +274,7 @@ async function bootService(options: MemoryPluginOptions | undefined, log: LogFn)
     token,
     refs: 0,
     lastUser: new LruMap(SESSION_MAPS_MAX),
+    agent: new LruMap(SESSION_MAPS_MAX),
     injectionMemo: new LruMap(SESSION_MAPS_MAX),
     currentUserMessage: new LruMap(SESSION_MAPS_MAX),
     injected: new LruMap(SESSION_MAPS_MAX),

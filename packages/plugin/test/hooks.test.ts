@@ -2,8 +2,9 @@ import "./hermetic"
 import { afterEach, describe, expect, test } from "bun:test"
 import { mkdirSync, realpathSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
-import { MemoryEngine } from "@opencode-memory/core"
+import { MemoryEngine, upsertConcept } from "@opencode-memory/core"
 import plugin, { applyMemoryPermissions, evaluate, fromConfig } from "../src/index"
+import { LEARNING_AGENT_WORKSPACE } from "../src/learning-agent"
 import { pausedReasonText, recallText, resolveArtifactFile } from "../src/tools"
 import { wildcardMatch, type PermissionRule } from "../src/permission"
 import { splicePrunedMessages } from "../src/prune-messages"
@@ -457,9 +458,9 @@ describe("memoized injection and tools", () => {
     expect(saved.ok).toBe(true)
     const keys: Array<string | undefined> = []
     const build = svc.engine.buildInjection.bind(svc.engine)
-    svc.engine.buildInjection = async (id, query, requestKey) => {
+    svc.engine.buildInjection = async (id, query, requestKey, override) => {
       keys.push(requestKey)
-      return build(id, query, requestKey)
+      return build(id, query, requestKey, override)
     }
 
     await userTurn(hooks, "u1")
@@ -646,9 +647,14 @@ describe("memoized injection and tools", () => {
   const countBuilds = (svc: any) => {
     const keys: Array<string | undefined> = []
     const build = svc.engine.buildInjection.bind(svc.engine)
-    svc.engine.buildInjection = async (id: string, query?: string, requestKey?: string) => {
+    svc.engine.buildInjection = async (
+      id: string,
+      query?: string,
+      requestKey?: string,
+      override?: { domain?: string; workspace?: string },
+    ) => {
       keys.push(requestKey)
-      return build(id, query, requestKey)
+      return build(id, query, requestKey, override)
     }
     return keys
   }
@@ -841,6 +847,120 @@ describe("memoized injection and tools", () => {
     svc.engine.trackSession(svc.engine.adapterForDirectory(dir)!, { id: "ses_gone" })
     await svc.engine.forgetSession("ses_gone", "user")
     expect(await remember({ content: "The user likes short commit messages" }, "ses_gone")).toMatch(/^Could not remember: this session was forgotten/)
+  })
+
+  function dueCard(db: MemoryEngine["db"], workspace: string, name: string) {
+    const id = upsertConcept(db, workspace, name)
+    db.prepare("INSERT INTO review_cards(concept_id, card, due_at, reps, lapses) VALUES (?,?,?,?,?)").run(id, "{}", Date.now() - 60_000, 0, 0)
+  }
+
+  const turn = (hooks: any, sessionID: string, messageID: string, agent: string, text = "hello") =>
+    hooks["chat.message"]?.(
+      { sessionID, messageID, agent },
+      { message: { id: messageID, sessionID, role: "user" }, parts: [{ type: "text", text }] },
+    )
+
+  const transformOf = async (hooks: any, sessionID: string) => {
+    const out = { system: ["You are a helpful coding assistant for this repository."] }
+    await hooks["experimental.chat.system.transform"]?.({ sessionID, model: { id: "m", providerID: "p" } }, out)
+    return out.system
+  }
+
+  test("a learn agent in a general project gets due reviews; another agent and a mid-turn switch do not reuse that block", async () => {
+    const { hooks, svc, ctx } = await boot()
+    expect(svc.engine.projectDomain(ctx.projectId)).toBe("general")
+    expect(ctx.workspace).not.toBe(LEARNING_AGENT_WORKSPACE)
+    dueCard(svc.engine.db, LEARNING_AGENT_WORKSPACE, "Photosynthesis")
+    dueCard(svc.engine.db, ctx.workspace, "ProjectOnlyConcept")
+
+    const calls: Array<{ id: string; override?: { domain?: string; workspace?: string } }> = []
+    const build = svc.engine.buildInjection.bind(svc.engine)
+    svc.engine.buildInjection = async (id, query, requestKey, override) => {
+      calls.push({ id, override })
+      return build(id, query, requestKey, override)
+    }
+
+    await turn(hooks, "ses_build", "b1", "build")
+    const other = await transformOf(hooks, "ses_build")
+    expect(other.join("\n")).not.toContain("Concepts due for review")
+
+    await turn(hooks, "ses_live", "u1", "learn")
+    const first = await transformOf(hooks, "ses_live")
+    const second = await transformOf(hooks, "ses_live")
+    expect(first.join("\n")).toContain("Concepts due for review: Photosynthesis")
+    expect(first.join("\n")).not.toContain("ProjectOnlyConcept")
+    expect(second).toEqual(first)
+    const live = () => calls.filter((c) => c.id === "ses_live")
+    expect(live()).toHaveLength(1)
+    expect(live()[0]?.override).toEqual({ domain: "learning", workspace: LEARNING_AGENT_WORKSPACE })
+
+    await hooks["chat.params"]?.(
+      {
+        sessionID: "ses_live",
+        agent: "build",
+        model: { id: "m", providerID: "p" },
+        provider: {},
+        message: { id: "u1", sessionID: "ses_live", role: "user", time: { created: 1 }, agent: "build", model: { providerID: "p", modelID: "m" } },
+      },
+      { temperature: 0, topP: 0, topK: 0, maxOutputTokens: undefined, options: {} },
+    )
+    const switched = await transformOf(hooks, "ses_live")
+    expect(switched.join("\n")).not.toContain("Concepts due for review")
+    expect(live()).toHaveLength(2)
+    expect(live()[1]?.override).toBeUndefined()
+    expect(svc.agent.get("ses_live")).toBe("build")
+
+    await hooks.event?.({ event: { type: "session.deleted", properties: { info: { id: "ses_live" } } } as any })
+    expect(svc.agent.get("ses_live")).toBeUndefined()
+  })
+
+  test("learn-agent learning tools read and record in the learning workspace", async () => {
+    const { hooks, svc, ctx } = await boot()
+    dueCard(svc.engine.db, LEARNING_AGENT_WORKSPACE, "Photosynthesis")
+    dueCard(svc.engine.db, ctx.workspace, "ProjectOnlyConcept")
+    const learnCtx = { ...toolCtx("ses_live"), agent: "learn" }
+
+    const learnDue = String(await hooks.tool!.learning_due_reviews.execute({}, learnCtx))
+    expect(learnDue).toContain("Photosynthesis")
+    expect(learnDue).not.toContain("ProjectOnlyConcept")
+    expect(String(await hooks.tool!.learning_due.execute({}, learnCtx))).toContain("Photosynthesis")
+
+    const buildDue = String(await hooks.tool!.learning_due_reviews.execute({}, toolCtx("ses_live")))
+    expect(buildDue).toContain("ProjectOnlyConcept")
+    expect(buildDue).not.toContain("Photosynthesis")
+
+    const quote = "photosynthesis turns light into sugar"
+    await turn(hooks, "ses_live", "u1", "learn", `I think ${quote} for the plant.`)
+    const recorded = String(
+      await hooks.tool!.learning_record_attempt.execute(
+        { concept: "Chlorophyll", answer: quote, evaluation: "correct" },
+        learnCtx,
+      ),
+    )
+    const id = recorded.match(/attempt (\S+)/)?.[1]
+    expect(svc.engine.observation(id!)?.workspace).toBe(LEARNING_AGENT_WORKSPACE)
+
+    const buildRecorded = String(
+      await hooks.tool!.learning_record_attempt.execute(
+        { concept: "Stomata", answer: quote, evaluation: "partial" },
+        toolCtx("ses_live"),
+      ),
+    )
+    const buildId = buildRecorded.match(/attempt (\S+)/)?.[1]
+    expect(svc.engine.observation(buildId!)?.workspace).toBe(ctx.workspace)
+  })
+
+  test("inject.learningAgents chooses which agents get the learning workspace", async () => {
+    const { hooks, svc } = await boot()
+    dueCard(svc.engine.db, LEARNING_AGENT_WORKSPACE, "Photosynthesis")
+    svc.engine.updateConfig(
+      { ...svc.engine.config, inject: { ...svc.engine.config.inject, learningAgents: ["tutor"] } },
+      { trusted: true },
+    )
+    await turn(hooks, "ses_live", "u1", "learn")
+    expect((await transformOf(hooks, "ses_live")).join("\n")).not.toContain("Concepts due for review")
+    await turn(hooks, "ses_live", "u2", "tutor")
+    expect((await transformOf(hooks, "ses_live")).join("\n")).toContain("Concepts due for review: Photosynthesis")
   })
 
   test("memory_flush honours an aborted context", async () => {

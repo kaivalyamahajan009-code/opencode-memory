@@ -1,6 +1,11 @@
 import { afterAll, describe, expect, test } from "bun:test"
+import { writeFileSync } from "node:fs"
+import { join } from "node:path"
 import { T0, cleanupAllTempDirs, openEngine, openHarness, putObservation, seed } from "./helpers"
+import { loadConfig, parseConfigPatch } from "../src/config"
 import { buildMemoryBlock, isInternalSystem, MEMORY_BLOCK_TAG } from "../src/inject"
+import { upsertConcept } from "../src/learning"
+import type { Database } from "../src/sqlite"
 
 afterAll(cleanupAllTempDirs)
 
@@ -128,6 +133,57 @@ describe("injection", () => {
       expect(id3).toBeTruthy()
       expect(id3).not.toBe(id1)
       expect(engine.db.prepare("SELECT COUNT(*) AS n FROM context_snapshots").get<{ n: number }>()!.n).toBe(2)
+    } finally {
+      await ctx.close()
+    }
+  })
+
+  function dueCard(db: Database, workspace: string, name: string) {
+    const id = upsertConcept(db, workspace, name, T0)
+    db.prepare("INSERT INTO review_cards(concept_id, card, due_at, reps, lapses) VALUES (?,?,?,?,?)").run(id, "{}", T0 - 1, 0, 0)
+  }
+
+  test("buildInjection override replaces domain and workspace; omitted override keeps the project", async () => {
+    const ctx = await openEngine()
+    try {
+      seed(ctx.engine.db, {
+        projectId: "proj_gen",
+        workspace: "personal-knowledge",
+        sessionId: "ses_gen",
+        domain: "general",
+        directory: ctx.dir,
+      })
+      dueCard(ctx.engine.db, "learning", "Photosynthesis")
+      dueCard(ctx.engine.db, "personal-knowledge", "ProjectOnlyConcept")
+      expect(ctx.engine.projectDomain("proj_gen")).toBe("general")
+      expect(ctx.engine.config.inject.learningAgents).toEqual(["learn"])
+
+      const plain = await ctx.engine.buildInjection("ses_gen", "review")
+      expect(plain?.block ?? "").not.toContain("Concepts due for review")
+
+      const projectLearning = await ctx.engine.buildInjection("ses_gen", "review", "req-project", { domain: "learning" })
+      expect(projectLearning?.block).toContain("Concepts due for review: ProjectOnlyConcept")
+      expect(projectLearning?.block).not.toContain("Photosynthesis")
+
+      const shared = await ctx.engine.buildInjection("ses_gen", "review", "req-shared", { domain: "learning", workspace: "learning" })
+      expect(shared?.block).toContain("Concepts due for review: Photosynthesis")
+      expect(shared?.block).not.toContain("ProjectOnlyConcept")
+    } finally {
+      await ctx.close()
+    }
+  })
+
+  test("inject.learningAgents defaults to learn and round-trips through config.json", async () => {
+    const ctx = await openEngine()
+    try {
+      const path = join(ctx.dir, "config.json")
+      writeFileSync(path, JSON.stringify({ inject: { learningAgents: ["tutor"] } }))
+      const loaded = loadConfig(path)
+      expect(loaded.inject.learningAgents).toEqual(["tutor"])
+      expect(loaded.inject.enabled).toBe(true)
+      expect(loaded.inject.deadlineMs).toBe(250)
+      expect(() => parseConfigPatch({ inject: { learningAgents: [""] } })).toThrow()
+      expect(parseConfigPatch({ inject: { learningAgents: [] } }).inject?.learningAgents).toEqual([])
     } finally {
       await ctx.close()
     }
