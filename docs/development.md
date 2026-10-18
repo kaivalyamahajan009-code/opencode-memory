@@ -18,6 +18,8 @@
 - `scripts/rebase-fork.ps1` — guarded rebase of the sibling OpenCode fork's stacked branches.
 - `../opencode` — separately versioned thin desktop fork; not a workspace package here.
 
+For the step-by-step account of how those pieces were implemented (chunking/leases, observer validation, injection memo, HTTP/CSP, forget expansion, Windows rebase), see [Implementation report](implementation.md).
+
 ## Build and test
 
 Install:

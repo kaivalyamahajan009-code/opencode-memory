@@ -20,7 +20,7 @@ Current boundaries: learning and research state is workspace-wide rather than pr
 
 The OpenCode plugin captures lifecycle events and exposes memory tools. The Node-compatible core owns policy, SQLite, retrieval, review, learning/research, the vault, and backups. One plugin process binds `127.0.0.1`; other OpenCode windows share the database and route long-running commands through it. The dashboard is bundled into the plugin. The desktop fork only embeds `/embed`, passes session context over a constrained `postMessage` bridge, and opens `/app` for the complete UI.
 
-See [Architecture, data, and security](docs/architecture-security.md) for the component flow, scope rules, trust boundaries, and forget semantics.
+See [Architecture, data, and security](docs/architecture-security.md) for the component flow, scope rules, trust boundaries, and forget semantics. See [Implementation report](docs/implementation.md) for how those pieces were built.
 
 ## Requirements
 
@@ -105,6 +105,7 @@ See [User guide](docs/user-guide.md).
 - [Configuration reference and safe examples](docs/configuration.md)
 - [Memory tab and dashboard user guide](docs/user-guide.md)
 - [Architecture, data model, scopes, security, and privacy](docs/architecture-security.md)
+- [How it was implemented (pipelines, hooks, storage, fork)](docs/implementation.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Development, desktop fork, contribution, and release readiness](docs/development.md)
 - [Complete project and feature guide (PDF)](docs/OpenCode-Memory-Project-Documentation.pdf)
