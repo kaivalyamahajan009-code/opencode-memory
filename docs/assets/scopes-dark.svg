@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400">
+  <title>Memory scopes</title>
+  <desc>Session, project, workspace, and user read scopes. Workspace is the sharing boundary.</desc>
+  <rect width="960" height="400" rx="24" fill="#1c1917"/>
+  <text x="40" y="52" fill="#faf6f1" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="26" font-weight="600">Who can read a memory</text>
+  <text x="40" y="82" fill="#d6d3d1" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Workspace is the sharing boundary. Domain is classification, not access.</text>
+  <rect x="40" y="112" width="880" height="58" rx="12" fill="#292524" stroke="#44403c"/>
+  <text x="480" y="147" fill="#faf6f1" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="600">user</text>
+  <text x="860" y="147" fill="#d6d3d1" text-anchor="end" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="15">every workspace</text>
+  <rect x="130" y="184" width="700" height="58" rx="12" fill="#3f342c" stroke="#57534e"/>
+  <text x="480" y="219" fill="#faf6f1" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="600">workspace</text>
+  <text x="790" y="219" fill="#d6d3d1" text-anchor="end" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="15">same workspace</text>
+  <rect x="220" y="256" width="520" height="58" rx="12" fill="#5c4033" stroke="#78716c"/>
+  <text x="480" y="291" fill="#faf6f1" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="600">project</text>
+  <text x="700" y="291" fill="#faf6f1" text-anchor="end" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="15">this project</text>
+  <rect x="310" y="328" width="340" height="52" rx="12" fill="#fdba74"/>
+  <text x="480" y="360" fill="#1c1917" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="600">session · owning project</text>
+</svg>

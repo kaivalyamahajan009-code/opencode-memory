@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540">
+  <title>OpenCode Memory architecture</title>
+  <desc>OpenCode process with plugin hooks and tools, core storage and models, dashboard on 127.0.0.1:4777, and the desktop fork Memory tab.</desc>
+  <rect width="960" height="540" rx="24" fill="#f3efe6"/>
+  <text x="36" y="48" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="26" font-weight="600">OpenCode, core, and the dashboard</text>
+  <text x="36" y="76" fill="#57534e" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="15">One plugin process binds the port. Other windows share the database.</text>
+  <rect x="28" y="104" width="268" height="376" rx="16" fill="#fffdf8" stroke="#d6cfc3"/>
+  <text x="44" y="136" fill="#1e3a5f" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="600">OpenCode process</text>
+  <rect x="44" y="156" width="236" height="52" rx="10" fill="#eef2f6"/>
+  <text x="60" y="188" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Plugin hooks</text>
+  <rect x="44" y="218" width="236" height="52" rx="10" fill="#eef2f6"/>
+  <text x="60" y="250" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Memory tools</text>
+  <rect x="44" y="280" width="236" height="52" rx="10" fill="#eef2f6"/>
+  <text x="60" y="312" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Hidden om-observer</text>
+  <rect x="44" y="342" width="236" height="52" rx="10" fill="#eef2f6"/>
+  <text x="60" y="374" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Hidden om-reflector</text>
+  <rect x="44" y="404" width="236" height="52" rx="10" fill="#eef2f6"/>
+  <text x="60" y="436" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Slash commands</text>
+  <line x1="304" y1="292" x2="336" y2="292" stroke="#9a3412" stroke-width="2"/>
+  <polygon points="336,286 350,292 336,298" fill="#9a3412"/>
+  <rect x="356" y="104" width="268" height="376" rx="16" fill="#fffdf8" stroke="#d6cfc3"/>
+  <text x="372" y="136" fill="#9a3412" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="600">Core</text>
+  <rect x="372" y="156" width="236" height="52" rx="10" fill="#f8f1ea"/>
+  <text x="388" y="188" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Normalizer / redactor</text>
+  <rect x="372" y="218" width="236" height="52" rx="10" fill="#f8f1ea"/>
+  <text x="388" y="250" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Fixed-token chunker</text>
+  <rect x="372" y="280" width="236" height="52" rx="10" fill="#f8f1ea"/>
+  <text x="388" y="312" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Observer / reflector</text>
+  <rect x="372" y="342" width="236" height="52" rx="10" fill="#f8f1ea"/>
+  <text x="388" y="374" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">SQLite + FTS5</text>
+  <rect x="372" y="404" width="236" height="52" rx="10" fill="#f8f1ea"/>
+  <text x="388" y="436" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Markdown vault</text>
+  <line x1="632" y1="292" x2="664" y2="292" stroke="#9a3412" stroke-width="2"/>
+  <polygon points="664,286 678,292 664,298" fill="#9a3412"/>
+  <rect x="684" y="104" width="248" height="376" rx="16" fill="#fffdf8" stroke="#d6cfc3"/>
+  <text x="700" y="136" fill="#3f6212" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="600">Surfaces</text>
+  <rect x="700" y="156" width="216" height="52" rx="10" fill="#eef6f1"/>
+  <text x="716" y="188" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Loopback HTTP</text>
+  <rect x="700" y="218" width="216" height="52" rx="10" fill="#eef6f1"/>
+  <text x="716" y="250" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">127.0.0.1:4777</text>
+  <rect x="700" y="280" width="216" height="52" rx="10" fill="#eef6f1"/>
+  <text x="716" y="312" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Dashboard /app</text>
+  <rect x="700" y="342" width="216" height="52" rx="10" fill="#eef6f1"/>
+  <text x="716" y="374" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Embed /embed</text>
+  <rect x="700" y="404" width="216" height="52" rx="10" fill="#eef6f1"/>
+  <text x="716" y="436" fill="#1c1917" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Desktop Memory tab</text>
+  <text x="36" y="512" fill="#57534e" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="15">The fork embeds /embed and opens /app for the full UI.</text>
+</svg>
